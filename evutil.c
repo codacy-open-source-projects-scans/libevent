@@ -406,10 +406,12 @@ evutil_win_socketpair(int family, int type, int protocol,
 int
 evutil_socketpair(int family, int type, int protocol, evutil_socket_t fd[2])
 {
-#ifndef _WIN32
+#if defined(_WIN32)
+	return evutil_win_socketpair(family, type, protocol, fd);
+#elif defined(EVENT__HAVE_SOCKETPAIR)
 	return socketpair(family, type, protocol, fd);
 #else
-	return evutil_win_socketpair(family, type, protocol, fd);
+	return evutil_ersatz_socketpair_(family, type, protocol, fd);
 #endif
 }
 
@@ -2284,6 +2286,7 @@ evutil_inet_pton_scope(int af, const char *src, void *dst, unsigned *indexp)
 		return -1;
 	}
 	cp = strchr(tmp_src, '%');
+	// The check had been already done above against original src
 	*cp = '\0';
 	r = evutil_inet_pton(af, tmp_src, dst);
 	mm_free(tmp_src);

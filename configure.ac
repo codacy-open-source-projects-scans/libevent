@@ -267,6 +267,7 @@ AM_CONDITIONAL(BUILD_WITH_NO_UNDEFINED, test x$bwin32 = xtrue || test x$cygwin =
 
 if test "$bwin32" = "true"; then
   AC_CHECK_LIB([ws2_32], [main])
+  AC_CHECK_LIB([iphlpapi], [GetAdaptersAddresses])
 fi
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -771,7 +772,7 @@ if test "$enable_gcc_warnings" != "no" && test "$GCC" = "yes"; then
    dnl Disable unknown pragmas warnings.
    AX_CHECK_COMPILE_FLAG([-Wno-pragmas], [CFLAGS="$CFLAGS -Wno-pragmas"],[],[-Werror])
 
-   dnl Disable Variable Lenght Array
+   dnl Disable Variable Length Array
    AX_CHECK_COMPILE_FLAG([-Wvla], [CFLAGS="$CFLAGS -Wvla"],[],[-Werror])
 
   if test "$have_clang" = "yes"; then
@@ -881,7 +882,7 @@ AM_CONDITIONAL([ENABLE_DOXYGEN], [test "$DX_FLAG_doc" = "1"])
 AM_CONDITIONAL([ENABLE_DOXYGEN_MAN], [test "$DX_FLAG_man" = "1"])
 
 dnl autotools uses the same pkg-config templates as cmake, and in cmake we have
-dnl CMAKE_DEBUG_POSTFIX, so define it to empty value to simply replcae it in
+dnl CMAKE_DEBUG_POSTFIX, so define it to empty value to simply replace it in
 dnl *.pc.in
 CMAKE_DEBUG_POSTFIX=""
 AC_SUBST([CMAKE_DEBUG_POSTFIX])

@@ -19,17 +19,8 @@
 #       start libevent.sln
 #
 
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 
-if (POLICY CMP0042)
-    cmake_policy(SET CMP0042 NEW) # MACOSX_RPATH is enabled by default.
-endif()
-if (POLICY CMP0054)
-    cmake_policy(SET CMP0054 NEW)
-endif()
-if (POLICY CMP0068)
-    cmake_policy(SET CMP0068 NEW) # RPATH settings on macOS do not affect install_name.
-endif()
 if (POLICY CMP0074)
     cmake_policy(SET CMP0074 NEW)
 endif()
@@ -72,6 +63,7 @@ include(CheckPrototypeDefinition)
 include(CheckFunctionKeywords)
 include(CheckConstExists)
 include(AddCompilerFlags)
+include(AddLinkerFlags)
 include(VersionViaGit)
 
 event_fuzzy_version_from_git()
@@ -212,6 +204,8 @@ Configure_RPATH()
 if (EVENT__ENABLE_VERBOSE_DEBUG)
     add_definitions(-DUSE_DEBUG=1)
 endif()
+
+add_linker_flags(-Wl,-z,max-page-size=16384)
 
 # make it colorful under ninja-build
 if ("${CMAKE_GENERATOR}" STREQUAL "Ninja")
@@ -466,6 +460,7 @@ else()
         sys/ioctl.h
         sys/mman.h
         sys/queue.h
+        sys/tree.h
         sys/select.h
         sys/sendfile.h
         sys/uio.h
@@ -539,8 +534,8 @@ else()
     list(APPEND SYMBOLS_TO_CHECK
         accept4
         arc4random
-        arc4random_addrandom
         arc4random_buf
+        arc4random_stir
         epoll_create
         epoll_create1
         epoll_ctl
@@ -826,6 +821,7 @@ set(HDR_PRIVATE
     evrpc-internal.h
     evsignal-internal.h
     evthread-internal.h
+    evdns-internal.h
     ht-internal.h
     http-internal.h
     iocp-internal.h
@@ -839,7 +835,8 @@ set(HDR_PRIVATE
     openssl-compat.h
     evconfig-private.h
     sha1.h
-    compat/sys/queue.h)
+    compat/sys/queue.h
+    compat/sys/tree.h)
 
 set(HDR_COMPAT
     include/evdns.h
@@ -1248,14 +1245,16 @@ if (NOT EVENT__DISABLE_TESTS)
     #
     if (NOT EVENT__DISABLE_REGRESS)
         # (We require python to generate the regress tests)
-        find_package(PythonInterp 3)
+        find_package(Python3 COMPONENTS Interpreter)
 
-        if (PYTHONINTERP_FOUND)
+        if (Python3_FOUND)
             set(__FOUND_USABLE_PYTHON 1)
+            set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
         else()
-            find_package(PythonInterp 2)
-            if (PYTHONINTERP_FOUND)
+            find_package(Python2 COMPONENTS Interpreter)
+            if (Python2_FOUND)
                 set(__FOUND_USABLE_PYTHON 1)
+                set(PYTHON_EXECUTABLE ${Python2_EXECUTABLE})
             else()
                 message(ERROR "No suitable Python version found, bailing...")
             endif()
@@ -1749,6 +1748,8 @@ message(STATUS "CMAKE_VERBOSE_MAKEFILE:   ${CMAKE_VERBOSE_MAKEFILE}")
 message(STATUS "CMAKE_C_FLAGS:            ${CMAKE_C_FLAGS}")
 message(STATUS "CMAKE_BUILD_TYPE:         ${CMAKE_BUILD_TYPE}")
 message(STATUS "CMAKE_C_COMPILER:         ${CMAKE_C_COMPILER} (id ${CMAKE_C_COMPILER_ID}, clang ${CLANG}, GNUC ${GNUC}, version ${CMAKE_C_COMPILER_VERSION})")
+message(STATUS "CMAKE_SHARED_LINKER_FLAGS:${CMAKE_SHARED_LINKER_FLAGS}")
+message(STATUS "CMAKE_EXE_LINKER_FLAGS:   ${CMAKE_EXE_LINKER_FLAGS}")
 message(STATUS "CMAKE_AR:                 ${CMAKE_AR}")
 message(STATUS "CMAKE_RANLIB:             ${CMAKE_RANLIB}")
 message(STATUS "CMAKE_INSTALL_PREFIX:     ${CMAKE_INSTALL_PREFIX}")
